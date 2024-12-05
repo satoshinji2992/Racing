@@ -8,18 +8,22 @@ const int roadWidth = 2000;
 const int segLength = 180;
 const int roadCount = 1884;
 
+float angle = 0;
+
 //道路结构体
 struct Road
 {
 	float x, y, z;
 	float X, Y, W;
-	float scale,angle;
+	float scale;
+	float tz, tx;
 
 	Road(float _x, int _y, int _z) : x(_x), y(_y), z(_z) {}
-	void project(int camX, int camY, int camZ)
-	{
-		scale = 1.0f / (z - camZ);
-		X = (1 + scale * (x - camX)) * WinWidth / 2;
+	void project(int camX, int camY, int camZ, float angle) {
+		tx = (x-camX) * cos(angle) + (z-camZ) * sin(angle);
+		tz = -(x-camX) * sin(angle) + (z-camZ) * cos(angle);
+		scale = 1.0f / tz;
+		X = (1 + scale * tx) * WinWidth / 2;
 		Y = (1 - scale * (y - camY)) * WinHeight / 2;
 		W = scale * roadWidth * WinWidth / 2;
 	}
@@ -27,13 +31,13 @@ struct Road
 };
 
 //绘制梯形
-void DrawTrape(RenderWindow& window, Color c, int x1, int y1, int w1, int x2, int y2, int w2) {
+void DrawTrape(RenderWindow& window, Color c, int x1, int y1, int w1, int x2, int y2, int w2,float angle) {
 	ConvexShape polygon(4);
 	polygon.setFillColor(c);
-	polygon.setPoint(0, Vector2f(x1 - w1, y1));
-	polygon.setPoint(1, Vector2f(x2 - w2, y2));
-	polygon.setPoint(2, Vector2f(x2 + w2, y2));
-	polygon.setPoint(3, Vector2f(x1 + w1, y1));
+	polygon.setPoint(0, Vector2f(x1 - w1*cos(angle), y1-w1*sin(angle)));
+	polygon.setPoint(1, Vector2f(x2 - w2 * cos(angle), y2 - w2 * sin(angle)));
+	polygon.setPoint(2, Vector2f(x2 + w2 * cos(angle), y2 + w2 * sin(angle)));
+	polygon.setPoint(3, Vector2f(x1 + w1 * cos(angle), y1+w1 * sin(angle)));
 	window.draw(polygon);
 
 }
@@ -58,7 +62,7 @@ int main()
 	Texture bg1,bg2;
 	bg1.loadFromFile("cloud.png");
 	bg2.loadFromFile("car.png");
-	Sprite s(bg1, IntRect(0, 0, WinWidth, WinHeight / 2));
+	Sprite s(bg1, IntRect(0, 0, WinWidth, WinHeight));
 	Sprite c(bg2, IntRect(0, 0, WinWidth, WinHeight));
 	//生成道路
 	std::vector<Road> roads;
@@ -94,6 +98,7 @@ int main()
 
     
 	Clock clock;
+	int counter=0;
 	bool start = false;
 	Text timerText;
 	timerText.setFont(font);
@@ -115,9 +120,14 @@ int main()
 		
 		if (Keyboard::isKeyPressed(Keyboard::Enter)) start = true;
 		if (start) {
+
+			
 			Time time = clock.getElapsedTime();
-			int timer = static_cast<int>(time.asSeconds());
-			timerText.setString(std::to_string(timer));
+			if (time.asSeconds() >= 1) {
+				counter++;  // 增加计数
+				clock.restart();  // 重置时钟
+			}
+			timerText.setString(std::to_string(counter));
 
 
 			if (isOut == false) {
@@ -148,6 +158,10 @@ int main()
 			}
 
 			if (Keyboard::isKeyPressed(Keyboard::Space) && Keyboard::isKeyPressed(Keyboard::S)) camZ -= 1 * segLength;
+
+			if (Keyboard::isKeyPressed(Keyboard::Left)) angle += 0.009;
+			if (Keyboard::isKeyPressed(Keyboard::Right)) angle -= 0.009;
+
 		}
 
 		int totalLength = roadCount * segLength;
@@ -164,11 +178,11 @@ int main()
 		if (camX < roads[startPos].x+roadWidth/1.5&&camX>roads[startPos].x - roadWidth / 1.5) isOut = false;
 		else isOut = true;
 
+		window.draw(s);
 		
-
 		for (int i = startPos; i < startPos + 300;i++) {
 			Road& now = roads[i%roadCount];
-			now.project(camX, camY, camZ-(i>=roadCount? totalLength : 0 ));
+            now.project(camX, camY, camZ - (i >= roadCount ? totalLength : 0), angle);
 			if (!i) continue;
 			if (now.Y < minY) {
 				minY = now.Y;
@@ -181,12 +195,13 @@ int main()
 			Color grass = i % 2 ? Color(12, 210, 16) : Color(0, 199, 0);
 			Color edge = i % 2 ? Color(0, 0,0) : Color(255, 255, 255);
 			Color road= i %2 ? Color(105,105,105) : Color(101,101,101);
-			DrawTrape(window, grass, prev.X, prev.Y, WinWidth*10, now.X, now.Y, WinWidth*10);
-			DrawTrape(window, edge, prev.X, prev.Y, prev.W*1.3, now.X, now.Y, now.W*1.3);
-			DrawTrape(window, road, prev.X, prev.Y, prev.W, now.X, now.Y, now.W);
+			DrawTrape(window, grass, prev.X, prev.Y, WinWidth*10, now.X, now.Y, WinWidth*10,angle/10);
+			DrawTrape(window, edge, prev.X, prev.Y, prev.W*1.3, now.X, now.Y, now.W*1.3,angle/10);
+			DrawTrape(window, road, prev.X, prev.Y, prev.W, now.X, now.Y, now.W,angle/10);
 			//绘制道路
-			s.setTextureRect(IntRect(0, 0, WinWidth, minY));
-			window.draw(s);
+
+			
+			
 		}
 
 		window.draw(c);
