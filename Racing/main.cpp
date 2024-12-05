@@ -22,6 +22,7 @@ struct Road
 	void project(int camX, int camY, int camZ, float angle) {
 		tx = (x-camX) * cos(angle) + (z-camZ) * sin(angle);
 		tz = -(x-camX) * sin(angle) + (z-camZ) * cos(angle);
+		if (tz < 0.1f) tz = 0.1f;
 		scale = 1.0f / tz;
 		X = (1 + scale * tx) * WinWidth / 2;
 		Y = (1 - scale * (y - camY)) * WinHeight / 2;
@@ -71,13 +72,15 @@ int main()
 	{
 		//共1884,924-,924+
 		float curve;
-		if(i<123||(456<i&&i<789)||(1234<i&&i<1702)) curve = 0.5;
+		if(i<=123||(456<i&&i<=789)||(1234<i&&i<=1721)) curve = 0.5;
 		else curve = -0.5;
 		x += curve;
-        Road r(x*(45), 1600 * sin(i / 30.0), (1 + i) * segLength);
+		int y = 0;
+		if (i > 300 && i < 1240)
+			y =1600*sin(i/30.0 - 10);
+        Road r(x*(45), y , (1 + i) * segLength);
 		roads.push_back(r);
 	}
-
 	int camZ = 0;
 	int camX = 0;
 	int camY;
@@ -129,38 +132,38 @@ int main()
 			}
 			timerText.setString(std::to_string(counter));
 
+			if (Keyboard::isKeyPressed(Keyboard::A)) angle += 0.009;
+			if (Keyboard::isKeyPressed(Keyboard::D)) angle -= 0.009;
 
 			if (isOut == false) {
 				if (Keyboard::isKeyPressed(Keyboard::W)) {
-					camZ += 3 * segLength;
+					camZ += 3 * segLength*cos(-angle);
+					camX += 3 * segLength*sin(-angle);
 					distance += 0.6;
 				}
 				if (Keyboard::isKeyPressed(Keyboard::Space) && Keyboard::isKeyPressed(Keyboard::W)&&energy!=0) {
-					camZ += 2 * segLength;
+					camZ += 2 * segLength * cos(-angle);
+					camX += 2 * segLength * sin(-angle);
 					distance += 0.4;
 					energy -= 1;
 				}
 			}
 			else {
 				if (Keyboard::isKeyPressed(Keyboard::W)) {
-					camZ += segLength;
+					camZ += segLength * cos(-angle);
+					camX += segLength * sin(-angle);
 					distance += 0.2;
+					energy -= 1;
 				}
 			}
 
 			if (Keyboard::isKeyPressed(Keyboard::S)) {
-				camZ -= segLength;
+				camZ -= segLength * cos(-angle);
+				camX -= segLength * sin(-angle);
 				distance -= 0.2;
 			}
-			if (Keyboard::isKeyPressed(Keyboard::W) || Keyboard::isKeyPressed(Keyboard::S)) {
-				if (Keyboard::isKeyPressed(Keyboard::A)) camX -= segLength;
-				if (Keyboard::isKeyPressed(Keyboard::D)) camX += segLength;
-			}
-
+		
 			if (Keyboard::isKeyPressed(Keyboard::Space) && Keyboard::isKeyPressed(Keyboard::S)) camZ -= 1 * segLength;
-
-			if (Keyboard::isKeyPressed(Keyboard::Left)) angle += 0.009;
-			if (Keyboard::isKeyPressed(Keyboard::Right)) angle -= 0.009;
 
 		}
 
@@ -173,7 +176,7 @@ int main()
 
 		int minY = WinHeight;
 		int startPos = camZ / segLength;
-		camY = 1600 + roads[startPos].y;
+		camY = 2000 + roads[startPos].y;
 			
 		if (camX < roads[startPos].x+roadWidth/1.5&&camX>roads[startPos].x - roadWidth / 1.5) isOut = false;
 		else isOut = true;
@@ -195,14 +198,15 @@ int main()
 			Color grass = i % 2 ? Color(12, 210, 16) : Color(0, 199, 0);
 			Color edge = i % 2 ? Color(0, 0,0) : Color(255, 255, 255);
 			Color road= i %2 ? Color(105,105,105) : Color(101,101,101);
-			DrawTrape(window, grass, prev.X, prev.Y, WinWidth*10, now.X, now.Y, WinWidth*10,angle/10);
-			DrawTrape(window, edge, prev.X, prev.Y, prev.W*1.3, now.X, now.Y, now.W*1.3,angle/10);
-			DrawTrape(window, road, prev.X, prev.Y, prev.W, now.X, now.Y, now.W,angle/10);
+			DrawTrape(window, grass, prev.X, prev.Y, WinWidth*10, now.X, now.Y, WinWidth*10,0);
+			DrawTrape(window, edge, prev.X, prev.Y, prev.W*1.3, now.X, now.Y, now.W*1.3,0);
+			DrawTrape(window, road, prev.X, prev.Y, prev.W, now.X, now.Y, now.W,0);
 			//绘制道路
 
-			
-			
 		}
+
+		if (angle > 1) angle = 1;
+		if (angle < -1) angle = -1;
 
 		window.draw(c);
 
