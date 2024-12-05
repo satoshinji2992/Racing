@@ -9,6 +9,7 @@ const int segLength = 180;
 const int roadCount = 1884;
 
 float angle = 0;
+bool turnl = false, turnr = false;
 
 //道路结构体
 struct Road
@@ -132,8 +133,17 @@ int main()
 			}
 			timerText.setString(std::to_string(counter));
 
-			if (Keyboard::isKeyPressed(Keyboard::A)) angle += 0.009;
-			if (Keyboard::isKeyPressed(Keyboard::D)) angle -= 0.009;
+			if (Keyboard::isKeyPressed(Keyboard::A)) {
+				angle += 0.009;
+				turnl = true;
+			}
+			else turnl = false;
+
+			if (Keyboard::isKeyPressed(Keyboard::D)) {
+				angle -= 0.009;
+				turnr = true;
+			}
+			else turnr = false;
 
 			if (isOut == false) {
 				if (Keyboard::isKeyPressed(Keyboard::W)) {
@@ -198,10 +208,22 @@ int main()
 			Color grass = i % 2 ? Color(12, 210, 16) : Color(0, 199, 0);
 			Color edge = i % 2 ? Color(0, 0,0) : Color(255, 255, 255);
 			Color road= i %2 ? Color(105,105,105) : Color(101,101,101);
-			DrawTrape(window, grass, prev.X, prev.Y, WinWidth*10, now.X, now.Y, WinWidth*10,0);
-			DrawTrape(window, edge, prev.X, prev.Y, prev.W*1.3, now.X, now.Y, now.W*1.3,0);
-			DrawTrape(window, road, prev.X, prev.Y, prev.W, now.X, now.Y, now.W,0);
 			//绘制道路
+			if (turnl) {
+				DrawTrape(window, grass, prev.X, prev.Y, WinWidth * 10, now.X, now.Y, WinWidth * 10, -0.1);
+				DrawTrape(window, edge, prev.X, prev.Y, prev.W * 1.3, now.X, now.Y, now.W * 1.3, -0.1);
+				DrawTrape(window, road, prev.X, prev.Y, prev.W, now.X, now.Y, now.W, -0.1);
+			}
+			else if (turnr) {
+				DrawTrape(window, grass, prev.X, prev.Y, WinWidth * 10, now.X, now.Y, WinWidth * 10, 0.1);
+				DrawTrape(window, edge, prev.X, prev.Y, prev.W * 1.3, now.X, now.Y, now.W * 1.3, 0.1);
+				DrawTrape(window, road, prev.X, prev.Y, prev.W, now.X, now.Y, now.W, 0.1);
+			}
+			else {
+				DrawTrape(window, grass, prev.X, prev.Y, WinWidth * 10, now.X, now.Y, WinWidth * 10, 0);
+				DrawTrape(window, edge, prev.X, prev.Y, prev.W * 1.3, now.X, now.Y, now.W * 1.3, 0);
+				DrawTrape(window, road, prev.X, prev.Y, prev.W, now.X, now.Y, now.W, 0);
+			}
 
 		}
 
