@@ -89,7 +89,7 @@ int main()
 	bool isOut = false;
 	bool isFly = false;
 	int num = 7;
-	int energy = 698;
+	int energy = 700;
 
 	//在画面上显示距离
 	Font font;
@@ -163,7 +163,8 @@ int main()
 					camZ += segLength * cos(-angle);
 					camX += segLength * sin(-angle);
 					distance += 0.2;
-					energy -= 1;
+					if (Keyboard::isKeyPressed(Keyboard::Space))
+						energy -= 1;
 				}
 			}
 
@@ -173,8 +174,8 @@ int main()
 				distance -= 0.2;
 			}
 		
-			if (Keyboard::isKeyPressed(Keyboard::Space) && Keyboard::isKeyPressed(Keyboard::S)) camZ -= 1 * segLength;
-
+			if (Keyboard::isKeyPressed(Keyboard::Space) && Keyboard::isKeyPressed(Keyboard::S)) 
+				camZ -= 1 * segLength;
 		}
 
 		int totalLength = roadCount * segLength;
@@ -234,7 +235,7 @@ int main()
 
 		text.setString(std::to_string(distance));
 		window.draw(text);
-		num = (energy+1) / 100;
+		num = (energy+99) / 100;
 		DrawEnergy(window, num);
 		window.draw(timerText);
 		window.display();
