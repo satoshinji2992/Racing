@@ -145,7 +145,7 @@ int main()
 	bool isFly = false;
 	int num = 7;
 	int energy = 700;
-	int round = 9;
+	int round = 0;
 	int hit = 0;
 	int first = 0;
 	int score = 0;
