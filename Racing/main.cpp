@@ -30,7 +30,7 @@ struct nailong
 {
 	point p[4];
 	nailong(float _x, float _y, float _z) : p{
-		{_x,_y, _z},{_x + 1032,_y,_z},{_x + 1032,_y + 1500,_z},{_x,_y + 1500,_z}} {}
+		{_x,_y, _z},{_x + 1200,_y,_z},{_x + 1200,_y + 1800,_z},{_x,_y + 1800,_z}} {}
 	bool eat = false;
 };
 
@@ -123,8 +123,19 @@ int main()
 	}
 
 	//生成nailong
-	struct nailong n1(roads[100].x+rand() % 1500, roads[100].y, roads[100].z);
-	struct nailong n2(roads[450].x+rand() % 1500, roads[450].y, roads[450].z);
+    #include <ctime>
+
+    srand(static_cast<unsigned int>(time(0)));
+
+	int position1 = rand() % 500;
+	int position2 = rand() % 500 + 500;
+	int position3 = rand() % 500 + 1000;
+    struct nailong n1(roads[position1].x -roadWidth/2  + rand() % 1500, roads[position1].y, roads[position1].z);
+	struct nailong n2(roads[position2].x - roadWidth / 2 + rand() % 1500, roads[position2].y, roads[position2].z);
+	struct nailong n3(roads[position3].x - roadWidth / 2 + rand() % 1500, roads[position3].y, roads[position3].z);
+	
+
+   
 
 	int camZ = 0;
 	int camX = 0;
@@ -134,8 +145,11 @@ int main()
 	bool isFly = false;
 	int num = 7;
 	int energy = 700;
-	int round = 0;
+	int round = 9;
 	int hit = 0;
+	int first = 0;
+	int score = 0;
+
 
 	//在画面上显示距离
 	Font font;
@@ -203,7 +217,7 @@ int main()
 					camZ += 2 * segLength * cos(-angle);
 					camX += 2 * segLength * sin(-angle);
 					distance += 0.4;
-					energy -= 5;
+					energy -= 2;
 				}
 			}
 			else {
@@ -212,7 +226,7 @@ int main()
 					camX += segLength * sin(-angle);
 					distance += 0.2;
 					if (Keyboard::isKeyPressed(Keyboard::Space))
-						energy -= 2;
+						energy -= 1;
 				}
 			}
 
@@ -227,23 +241,38 @@ int main()
 		}
 
 		//当撞到nailong时,能量增加
-		if (!n1.eat && (camZ <n1.p[0].z || camZ >n1.p[0].z ) && camX > n1.p[0].x+400 && camX < n1.p[1].x-400) {
+		if (!n1.eat && ((camZ < n1.p[0].z + 100) && (camZ > n1.p[0].z - 100)) && camX > n1.p[0].x-120 && camX < n1.p[1].x+120) {
 			n1.eat = true;
 			energy += 100;
 			hit = 30;
 		}
-		if (!n2.eat && (camZ < n2.p[0].z || camZ > n2.p[0].z ) && camX > n2.p[0].x+400 && camX < n2.p[1].x-400) {
+		if (!n2.eat && ((camZ < n2.p[0].z + 100) && (camZ > n2.p[0].z - 100)) && camX > n2.p[0].x - 120 && camX < n2.p[1].x + 120) {
 			n2.eat = true;
 			energy += 100;
 			hit = 30;
 		}
+		if (!n3.eat && ((camZ < n3.p[0].z + 100) && (camZ > n3.p[0].z - 100)) && camX > n3.p[0].x - 120 && camX < n3.p[1].x + 120) {
+			n3.eat = true;
+			energy += 100;
+			hit = 30;
+		}
+		
+		
 		
 		int totalLength = roadCount * segLength;
 		if (camZ >= totalLength) {
 			camZ -= totalLength;
 			n1.eat = false;
 			n2.eat = false;
+			n3.eat = false;
 			round++;
+			//每一轮重新生成nailong
+			position1 = rand() % 500 + 200;
+			position2 = rand() % 500 + 700;
+			position3 = rand() % 500 + 1200;
+			n1 = struct nailong(roads[position1].x - roadWidth / 2 + rand() % 1500, roads[position1].y, roads[position1].z);
+			n2 = struct nailong(roads[position2].x - roadWidth / 2 + rand() % 1500, roads[position2].y, roads[position2].z);
+			n3 = struct nailong(roads[position3].x - roadWidth / 2 + rand() % 1500, roads[position3].y, roads[position3].z);
 		}
 		if (camZ < 0) camZ += totalLength;
 
@@ -261,15 +290,21 @@ int main()
 		
 
 		//计算nailong的X和Y;
-		n1.p[0].project(camX, camY, camZ - (startPos >= roadCount ? totalLength : 0), angle);
-		n1.p[1].project(camX, camY, camZ - (startPos >= roadCount ? totalLength : 0), angle);
-		n1.p[2].project(camX, camY, camZ - (startPos >= roadCount ? totalLength : 0), angle);
-		n1.p[3].project(camX, camY, camZ - (startPos >= roadCount ? totalLength : 0), angle);
+		n1.p[0].project(camX, camY, camZ, angle);
+		n1.p[1].project(camX, camY, camZ, angle);
+		n1.p[2].project(camX, camY, camZ, angle);
+		n1.p[3].project(camX, camY, camZ, angle);
 
-		n2.p[0].project(camX, camY, camZ - (startPos >= roadCount ? totalLength : 0), angle);
-		n2.p[1].project(camX, camY, camZ - (startPos >= roadCount ? totalLength : 0), angle);
-		n2.p[2].project(camX, camY, camZ - (startPos >= roadCount ? totalLength : 0), angle);
-		n2.p[3].project(camX, camY, camZ - (startPos >= roadCount ? totalLength : 0), angle);
+		n2.p[0].project(camX, camY, camZ, angle);
+		n2.p[1].project(camX, camY, camZ, angle);
+		n2.p[2].project(camX, camY, camZ, angle);
+		n2.p[3].project(camX, camY, camZ, angle);
+
+		n3.p[0].project(camX, camY, camZ, angle);
+		n3.p[1].project(camX, camY, camZ, angle);
+		n3.p[2].project(camX, camY, camZ, angle);
+		n3.p[3].project(camX, camY, camZ, angle);
+
 
 		for (int i = startPos; i < startPos + 300;i++) {
 			Road& now = roads[i%roadCount];
@@ -311,6 +346,7 @@ int main()
 		//绘制nailong
 		DrawNailong(window, nailong, n1);
 		DrawNailong(window, nailong, n2);
+		DrawNailong(window, nailong, n3);
 
 		if (hit > 0) window.draw(n_head);
 
@@ -336,6 +372,29 @@ int main()
 		window.draw(roundText);
 
 		hit--;
+		
+		//当round=10时,黑屏并显示游戏结束,打印时间
+		if (round == 10) {
+			window.clear();
+			Text endText;
+			endText.setFont(font);
+			endText.setString("Game Over");
+			endText.setCharacterSize(48);
+			endText.setFillColor(Color::Red);
+			endText.setPosition(400, 300);
+			window.draw(endText);
+			Text timeText;
+			timeText.setFont(font);
+			if (first < 5 ) {
+				score = counter;
+			}
+			timeText.setString("Time: " + std::to_string(score) + "s");
+			timeText.setCharacterSize(48);
+			timeText.setFillColor(Color::Red);
+			timeText.setPosition(400, 400);
+			window.draw(timeText);
+			first++;
+		}
 
 		window.display();
 	}
