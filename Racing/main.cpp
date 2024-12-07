@@ -106,11 +106,19 @@ int main()
 	Sprite n(nailong, IntRect(0, 0, 533, 500));
 	Sprite n_head(nailong_head, IntRect(0, 0, WinWidth, WinHeight));
 
-	SoundBuffer buffer[2];
-	Sound sound;
+	SoundBuffer buffer[7];
+	Sound sound,bgm;
 	buffer[0].loadFromFile("qidong.mp3");
 	buffer[1].loadFromFile("chongci.mp3");
+	buffer[2].loadFromFile("haxue.mp3");
+	buffer[3].loadFromFile("mengzhong.mp3");
+	buffer[4].loadFromFile("dashi.mp3");
+	buffer[5].loadFromFile("leyihaqi.mp3");
+	buffer[6].loadFromFile("jiangnan.mp3");
 
+	bgm.setBuffer(buffer[2]);
+	bgm.play();
+	bgm.setLoop(true);
 
 
 	//生成道路
@@ -158,7 +166,8 @@ int main()
 	int first = 0;
 	int score = 0;
 	int flyTime=0;
-
+	int bgmcount = 0;
+	int pause = 0;
 
 	//在画面上显示距离
 	Font font;
@@ -182,7 +191,7 @@ int main()
 
 	Text startText;
 	startText.setFont(font);
-	startText.setString("Press WS to move\nPress AD to turn\nPress F to fly(cost 1000 energy)\nPress Space to accelerate");
+	startText.setString("Press WS to move\nPress AD to turn\nPress F to fly(cost 1000 energy)\nPress Space to accelerate\nPress Alt to shift bgm");
 	startText.setCharacterSize(60);
 	startText.setFillColor(Color::Black);
 	startText.setPosition(120, 100);
@@ -197,6 +206,16 @@ int main()
 		}
 
 		//按下enter开始
+
+		if (Keyboard::isKeyPressed(Keyboard::LAlt)&&pause<=0) {
+			pause = 20;
+			bgmcount++;
+			bgm.setBuffer(buffer[2+(bgmcount%5)]);
+			bgm.play();
+		}
+
+		if (pause > -10)
+			pause--;
 
 		if (Keyboard::isKeyPressed(Keyboard::Enter)) {
 			if (start == false) {
