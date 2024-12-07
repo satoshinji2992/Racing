@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 
 using namespace sf;
 
@@ -95,7 +96,7 @@ int main()
 	RenderWindow window(VideoMode(WinWidth, WinHeight), "Racing");
 	window.setFramerateLimit(60);
 
-	Texture bg1, bg2, nailong,nailong_head;
+	Texture bg1, bg2, nailong, nailong_head;
 	bg1.loadFromFile("cloud.png");
 	bg2.loadFromFile("car.png");
 	nailong.loadFromFile("nailong.png");
@@ -104,6 +105,13 @@ int main()
 	Sprite c(bg2, IntRect(0, 0, WinWidth, WinHeight));
 	Sprite n(nailong, IntRect(0, 0, 533, 500));
 	Sprite n_head(nailong_head, IntRect(0, 0, WinWidth, WinHeight));
+
+	SoundBuffer buffer[2];
+	Sound sound;
+	buffer[0].loadFromFile("qidong.mp3");
+	buffer[1].loadFromFile("chongci.mp3");
+
+
 
 	//生成道路
 	std::vector<Road> roads;
@@ -123,32 +131,33 @@ int main()
 	}
 
 	//生成nailong
-    #include <ctime>
+#include <ctime>
 
-    srand(static_cast<unsigned int>(time(0)));
+	srand(static_cast<unsigned int>(time(0)));
 
 	int position1 = rand() % 500;
 	int position2 = rand() % 500 + 500;
 	int position3 = rand() % 500 + 1000;
-    struct nailong n1(roads[position1].x -roadWidth/2  + rand() % 1500, roads[position1].y, roads[position1].z);
+	struct nailong n1(roads[position1].x - roadWidth / 2 + rand() % 1500, roads[position1].y, roads[position1].z);
 	struct nailong n2(roads[position2].x - roadWidth / 2 + rand() % 1500, roads[position2].y, roads[position2].z);
 	struct nailong n3(roads[position3].x - roadWidth / 2 + rand() % 1500, roads[position3].y, roads[position3].z);
-	
 
-   
+
+
 
 	int camZ = 0;
 	int camX = 0;
-	int camY;
+	int camY =2000 ;
 	float distance = 0;
 	bool isOut = false;
 	bool isFly = false;
-	int num = 7;
 	int energy = 700;
+	int num;
 	int round = 0;
 	int hit = 0;
 	int first = 0;
 	int score = 0;
+	int flyTime=0;
 
 
 	//在画面上显示距离
@@ -171,7 +180,12 @@ int main()
 	timerText.setFillColor(Color::Cyan);
 	timerText.setPosition(0, 0);
 
-
+	Text startText;
+	startText.setFont(font);
+	startText.setString("Press WS to move\nPress AD to turn\nPress F to fly(cost 1000 energy)\nPress Space to accelerate");
+	startText.setCharacterSize(60);
+	startText.setFillColor(Color::Black);
+	startText.setPosition(120, 100);
 
 	//检测键盘输入
 	while (window.isOpen())
@@ -180,14 +194,20 @@ int main()
 		while (window.pollEvent(event))
 		{
 			if (event.type == Event::Closed) window.close();
-		}	
-		
+		}
+
 		//按下enter开始
-		
-		if (Keyboard::isKeyPressed(Keyboard::Enter)) start = true;
+
+		if (Keyboard::isKeyPressed(Keyboard::Enter)) {
+			if (start == false) {
+				sound.setBuffer(buffer[0]);
+				sound.play();
+			}
+			start = true;	
+		}
 		if (start) {
 
-			
+
 			Time time = clock.getElapsedTime();
 			if (time.asSeconds() >= 1) {
 				counter++;  // 增加计数
@@ -207,41 +227,63 @@ int main()
 			}
 			else turnr = false;
 
-			if (isOut == false) {
-				if (Keyboard::isKeyPressed(Keyboard::W)) {
-					camZ += 3 * segLength*cos(-angle);
-					camX += 3 * segLength*sin(-angle);
-					distance += 0.6;
+			if (isFly == false) {
+				if (isOut == false) {
+					if (Keyboard::isKeyPressed(Keyboard::W)) {
+						camZ += 3 * segLength * cos(-angle);
+						camX += 3 * segLength * sin(-angle);
+						distance += 0.6;
+					}
+					if (Keyboard::isKeyPressed(Keyboard::Space) && Keyboard::isKeyPressed(Keyboard::W) && energy > 0) {
+						camZ += 2 * segLength * cos(-angle);
+						camX += 2 * segLength * sin(-angle);
+						distance += 0.4;
+						energy -= 2;
+					}
 				}
-				if (Keyboard::isKeyPressed(Keyboard::Space) && Keyboard::isKeyPressed(Keyboard::W)&&energy> 0) {
-					camZ += 2 * segLength * cos(-angle);
-					camX += 2 * segLength * sin(-angle);
-					distance += 0.4;
-					energy -= 2;
+				else {
+					if (Keyboard::isKeyPressed(Keyboard::W)) {
+						camZ += segLength * cos(-angle);
+						camX += segLength * sin(-angle);
+						distance += 0.2;
+						if (Keyboard::isKeyPressed(Keyboard::Space))
+							energy -= 1;
+					}
 				}
-			}
-			else {
-				if (Keyboard::isKeyPressed(Keyboard::W)) {
-					camZ += segLength * cos(-angle);
-					camX += segLength * sin(-angle);
-					distance += 0.2;
-					if (Keyboard::isKeyPressed(Keyboard::Space))
-						energy -= 1;
-				}
-			}
 
-			if (Keyboard::isKeyPressed(Keyboard::S)) {
-				camZ -= segLength * cos(angle);
-				camX -= segLength * sin(-1*angle);
-				distance -= 0.2;
+				if (Keyboard::isKeyPressed(Keyboard::S)) {
+					camZ -= segLength * cos(angle);
+					camX -= segLength * sin(-1 * angle);
+					distance -= 0.2;
+				}
+
+				if (Keyboard::isKeyPressed(Keyboard::Space) && Keyboard::isKeyPressed(Keyboard::S))
+					camZ -= 1 * segLength;
+
+				//如果energy>1000,按下f减去1000energy,并且飞行
+				if (Keyboard::isKeyPressed(Keyboard::F) && energy >= 1000) {
+					energy -= 1000;
+					isFly = true;
+					sound.setBuffer(buffer[1]);
+					sound.play();
+				}
 			}
-		
-			if (Keyboard::isKeyPressed(Keyboard::Space) && Keyboard::isKeyPressed(Keyboard::S)) 
-				camZ -= 1 * segLength;
+			if (isFly == true) {
+				if (Keyboard::isKeyPressed(Keyboard::W)) {
+					camZ += 8 * segLength * cos(-angle);
+					camX += 8 * segLength * sin(-angle);
+					distance += 1.6;
+				}
+
+				flyTime++;
+				if (flyTime > 300) {
+					isFly = false;
+					flyTime = 0;
+				}
+			}
 		}
-
 		//当撞到nailong时,能量增加
-		if (!n1.eat && ((camZ < n1.p[0].z + 100) && (camZ > n1.p[0].z - 100)) && camX > n1.p[0].x-120 && camX < n1.p[1].x+120) {
+		if (!n1.eat && ((camZ < n1.p[0].z + 100) && (camZ > n1.p[0].z - 100)) && camX > n1.p[0].x - 120 && camX < n1.p[1].x + 120) {
 			n1.eat = true;
 			energy += 100;
 			hit = 30;
@@ -256,9 +298,9 @@ int main()
 			energy += 100;
 			hit = 30;
 		}
-		
-		
-		
+
+
+
 		int totalLength = roadCount * segLength;
 		if (camZ >= totalLength) {
 			camZ -= totalLength;
@@ -281,13 +323,28 @@ int main()
 
 		int minY = WinHeight;
 		int startPos = camZ / segLength;
-		camY = 2000 + roads[startPos].y;
-			
-		if (camX < roads[startPos].x+roadWidth/1.5&&camX>roads[startPos].x - roadWidth / 1.5) isOut = false;
+		//如果isFly,camY逐步增加
+		if (isFly) {
+			if (camY < 6000) {
+				camY += 80;
+			}
+		}
+		else {
+			if (camY >= 2000 + roads[startPos].y) {
+				camY -= 100;
+			}
+			if (camY < 2000 + roads[startPos].y) {
+				camY = 2000 + roads[startPos].y;
+			}
+		}
+
+		// ,否则camY=2000+roads[startPos].y
+
+		if (camX < roads[startPos].x + roadWidth / 1.5 && camX>roads[startPos].x - roadWidth / 1.5) isOut = false;
 		else isOut = true;
 
 		window.draw(s);
-		
+
 
 		//计算nailong的X和Y;
 		n1.p[0].project(camX, camY, camZ, angle);
@@ -306,9 +363,9 @@ int main()
 		n3.p[3].project(camX, camY, camZ, angle);
 
 
-		for (int i = startPos; i < startPos + 300;i++) {
-			Road& now = roads[i%roadCount];
-            now.project(camX, camY, camZ - (i >= roadCount ? totalLength : 0), angle);
+		for (int i = startPos; i < startPos + 300; i++) {
+			Road& now = roads[i % roadCount];
+			now.project(camX, camY, camZ - (i >= roadCount ? totalLength : 0), angle);
 			if (!i) continue;
 			if (now.Y < minY) {
 				minY = now.Y;
@@ -316,11 +373,11 @@ int main()
 			else {
 				continue;
 			}
-			Road& prev = roads[(i - 1)%roadCount];
+			Road& prev = roads[(i - 1) % roadCount];
 
 			Color grass = i % 2 ? Color(12, 210, 16) : Color(0, 199, 0);
-			Color edge = i % 2 ? Color(0, 0,0) : Color(255, 255, 255);
-			Color road= i %2 ? Color(105,105,105) : Color(101,101,101);
+			Color edge = i % 2 ? Color(0, 0, 0) : Color(255, 255, 255);
+			Color road = i % 2 ? Color(105, 105, 105) : Color(101, 101, 101);
 			//绘制道路
 			if (turnl) {
 				DrawTrape(window, grass, prev.X, prev.Y, WinWidth * 10, now.X, now.Y, WinWidth * 10, -0.1);
@@ -350,17 +407,17 @@ int main()
 
 		if (hit > 0) window.draw(n_head);
 
-		
 
+		//绘制车
 		window.draw(c);
 
+		//打印距离和能量
 		text.setString(std::to_string(distance));
 		window.draw(text);
 		num = (energy + 99) / 100;
 		DrawEnergy(window, num);
+		//打印时间
 		window.draw(timerText);
-
-		
 
 		//打印round,后面加上"/10"
 		Text roundText;
@@ -371,8 +428,11 @@ int main()
 		roundText.setPosition(0, 100);
 		window.draw(roundText);
 
+		if (!start)
+			window.draw(startText);
+
 		hit--;
-		
+
 		//当round=10时,黑屏并显示游戏结束,打印时间
 		if (round == 10) {
 			window.clear();
@@ -385,7 +445,7 @@ int main()
 			window.draw(endText);
 			Text timeText;
 			timeText.setFont(font);
-			if (first < 5 ) {
+			if (first < 5) {
 				score = counter;
 			}
 			timeText.setString("Time: " + std::to_string(score) + "s");
@@ -393,6 +453,7 @@ int main()
 			timeText.setFillColor(Color::Red);
 			timeText.setPosition(400, 400);
 			window.draw(timeText);
+
 			first++;
 		}
 
