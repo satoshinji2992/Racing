@@ -302,17 +302,17 @@ int main()
 			}
 		}
 		//当撞到nailong时,能量增加
-		if (!n1.eat && ((camZ < n1.p[0].z + 100) && (camZ > n1.p[0].z - 100)) && camX > n1.p[0].x - 120 && camX < n1.p[1].x + 120) {
+		if (!n1.eat && ((camZ < n1.p[0].z + 100) && (camZ > n1.p[0].z - 100)) && camX > n1.p[0].x - 180 && camX < n1.p[1].x + 180) {
 			n1.eat = true;
 			energy += 100;
 			hit = 30;
 		}
-		if (!n2.eat && ((camZ < n2.p[0].z + 100) && (camZ > n2.p[0].z - 100)) && camX > n2.p[0].x - 120 && camX < n2.p[1].x + 120) {
+		if (!n2.eat && ((camZ < n2.p[0].z + 100) && (camZ > n2.p[0].z - 100)) && camX > n2.p[0].x - 180 && camX < n2.p[1].x + 180) {
 			n2.eat = true;
 			energy += 100;
 			hit = 30;
 		}
-		if (!n3.eat && ((camZ < n3.p[0].z + 100) && (camZ > n3.p[0].z - 100)) && camX > n3.p[0].x - 120 && camX < n3.p[1].x + 120) {
+		if (!n3.eat && ((camZ < n3.p[0].z + 100) && (camZ > n3.p[0].z - 100)) && camX > n3.p[0].x - 180 && camX < n3.p[1].x + 180) {
 			n3.eat = true;
 			energy += 100;
 			hit = 30;
@@ -382,18 +382,11 @@ int main()
 		n3.p[3].project(camX, camY, camZ, angle);
 
 
-		for (int i = startPos; i < startPos + 300; i++) {
-			Road& now = roads[i % roadCount];
-			now.project(camX, camY, camZ - (i >= roadCount ? totalLength : 0), angle);
-			if (!i) continue;
-			if (now.Y < minY) {
-				minY = now.Y;
-			}
-			else {
-				continue;
-			}
-			Road& prev = roads[(i - 1) % roadCount];
-
+		for (int i = startPos+300; i > startPos; i--) {
+			Road& prev = roads[i % roadCount];
+			prev.project(camX, camY, camZ - (i >= roadCount ? totalLength : 0), angle);
+			Road& now = roads[(i - 1) % roadCount];
+			now.project(camX, camY, camZ - ((i - 1) >= roadCount ? totalLength : 0), angle);
 			Color grass = i % 2 ? Color(12, 210, 16) : Color(0, 199, 0);
 			Color edge = i % 2 ? Color(0, 0, 0) : Color(255, 255, 255);
 			Color road = i % 2 ? Color(105, 105, 105) : Color(101, 101, 101);
@@ -413,16 +406,24 @@ int main()
 				DrawTrape(window, edge, prev.X, prev.Y, prev.W * 1.3, now.X, now.Y, now.W * 1.3, 0);
 				DrawTrape(window, road, prev.X, prev.Y, prev.W, now.X, now.Y, now.W, 0);
 			}
-
+			//当i=position1,2,3时,绘制对应的nailong
+			if (i == position1) {
+				DrawNailong(window, nailong, n1);
+			}
+			if (i == position2) {
+				DrawNailong(window, nailong, n2);
+			}
+			if (i == position3) {
+				DrawNailong(window, nailong, n3);
+			}
 		}
+
+		
 
 		if (angle > 1) angle = 1;
 		if (angle < -1) angle = -1;
 
-		//绘制nailong
-		DrawNailong(window, nailong, n1);
-		DrawNailong(window, nailong, n2);
-		DrawNailong(window, nailong, n3);
+		
 
 		if (hit > 0) window.draw(n_head);
 
